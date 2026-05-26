@@ -13,8 +13,8 @@ connectDB();
 const app = express();
 
 // ─── Middleware ───────────────────────────────
-app.use(express.json());         // Parse JSON request bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // ─── Health Check Route ───────────────────────
 app.get("/", (req, res) => {
@@ -43,4 +43,16 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+
+  // Keep Render alive by pinging every 14 minutes
+  if (process.env.NODE_ENV === "production") {
+    const https = require("https");
+    setInterval(() => {
+      https.get(process.env.RENDER_URL || "", (res) => {
+        console.log(`♻️  Keep-alive ping sent. Status: ${res.statusCode}`);
+      }).on("error", (err) => {
+        console.log(`Keep-alive error: ${err.message}`);
+      });
+    }, 14 * 60 * 1000); // every 14 minutes
+  }
 });
